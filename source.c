@@ -18,7 +18,7 @@ int type3(void) {
 
     clock_t st, et;
     int currentPage = 0;
-    const  long PAGE_SIZE = 0x400*0x01; //global work item size = 1024 polys x 0x200
+    const  long PAGE_SIZE = 0x400*0x200; //global work item size = 1024 polys x 0x200
     const  long LIST_SIZE = 16; //16 bytes
 
     cl_uchar* C = (cl_uchar*)malloc(sizeof(cl_uchar) * LIST_SIZE * PAGE_SIZE);
@@ -103,7 +103,7 @@ int type3(void) {
     size_t global_item_size = PAGE_SIZE; // Process the entire lists
     //size_t local_item_size = 128; // Process in groups of 8
     st = chkpoint();
-    for (currentPage = 0; currentPage < 1; ++currentPage)
+    for (currentPage = 0; currentPage < 4096; ++currentPage)
     {
         *startPoly = PAGE_SIZE * currentPage;
         CHECK(ret = clEnqueueWriteBuffer(command_queue, offset_mem_obj, CL_FALSE, 0, sizeof(startPoly), startPoly, 0, NULL, NULL));
@@ -121,19 +121,19 @@ int type3(void) {
         //for (i = 0; i < LIST_SIZE; i++)
         //    printf("%d + %d = %d\n", A[i]);
 
-        for (int itm = 0;  itm < 10; itm++)    //show first 10 lines of the page
-        {
-            for (int i = 0; i < LIST_SIZE; i++)
-            {
-                printf(" %2.2X", C[itm * LIST_SIZE  +i]);
-            }
-            printf(" --- ");
-            for (int i = 0; i < LIST_SIZE / 2; i++)
-            {
-                printf("%2.2x ", (cl_uchar)((cl_uchar*)startPoly)[i]);
-            }
-            printf("\n");
-        }
+        //for (int itm = 0;  itm < 10; itm++)    //show first 10 lines of the page
+        //{
+        //    for (int i = 0; i < LIST_SIZE; i++)
+        //    {
+        //        printf(" %2.2X", C[itm * LIST_SIZE  +i]);
+        //    }
+        //    printf(" --- ");
+        //    for (int i = 0; i < LIST_SIZE / 2; i++)
+        //    {
+        //        printf("%2.2x ", (cl_uchar)((cl_uchar*)startPoly)[i]);
+        //    }
+        //    printf("\n");
+        //}
     }
 
     et = chkpoint();
