@@ -60,17 +60,17 @@ __constant uchar sbox3[256] =
     0x23, 0x20, 0x25, 0x26, 0x2F, 0x2C, 0x29, 0x2A, 0x0B, 0x08, 0x0D, 0x0E, 0x07, 0x04, 0x01, 0x02,
     0x13, 0x10, 0x15, 0x16, 0x1F, 0x1C, 0x19, 0x1A,
 };
-__constant uchar pbox_4[128] =
+__constant uchar pbox_4[10 /* 128 */] =
 {
-    0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
-    0x1B, 0x36, 0x01, 0xDA, 0xC2, 0xCA, 0xD2, 0x01, 0x02, 0xD0, 0x07, 0x88, 0x13, 0x40, 0x1F, 0x10,
+    0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36, 
+    /* 0x01, 0xDA, 0xC2, 0xCA, 0xD2, 0x01, 0x02, 0xD0, 0x07, 0x88, 0x13, 0x40, 0x1F, 0x10,
     0x27, 0x98, 0x3A, 0x20, 0x4E, 0xA8, 0x61, 0x30, 0x75, 0x97, 0x31, 0xD0, 0x07, 0x05, 0x0F, 0x0C,
     0x0D, 0x03, 0x04, 0x0B, 0x05, 0x0E, 0x06, 0x05, 0x0B, 0x03, 0x04, 0x05, 0x08, 0x07, 0x11, 0x0A,
     0x10, 0x09, 0x0C, 0x00, 0x00, 0xF4, 0xF8, 0xF8, 0xF8, 0xF2, 0xF2, 0xF1, 0xFC, 0x74, 0x78, 0x78,
     0x78, 0x72, 0x72, 0x71, 0x7C, 0xFF, 0xF9, 0xFA, 0x79, 0x7A, 0xFF, 0x01, 0xD0, 0x07, 0x7C, 0x11,
     0x6C, 0x11, 0x0C, 0x13, 0x82, 0x92, 0x9A, 0x91, 0x81, 0x94, 0xFF, 0x93, 0x95, 0xC8, 0x00, 0x00,
     0x00, 0xFF, 0xFF, 0x9A, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x48, 0x00, 0x00, 0x00, 0x79, 0x11,
-    0x59, 0x11, 0x69, 0x11, 0x7A, 0x11, 0x6A, 0x11,
+    0x59, 0x11, 0x69, 0x11, 0x7A, 0x11, 0x6A, 0x11, */
 };
 __constant uchar pbox_0[10][8] =
 {
@@ -157,23 +157,24 @@ __constant uchar sbox_oe[2][256] = {
 }
 };
 
-__constant uchar cha[6] = { 0x7F, 0x77, 0x3B, 0xE2, 0x90, 0x9B};
+//__constant uchar cha[6] = { 0x7F, 0x77, 0x3B, 0xE2, 0x90, 0x9B};
+__constant uchar cha16[16] = { 0x3B, 0xE2, 0x90, 0x9B, 0x7F, 0x77, 0x3B, 0xE2, 0x90, 0x9B, 0x7F, 0x77, 0x3B, 0xE2, 0x90, 0x9B };
 
 // 10-rounds loop to init the key
-__kernel void init_a(__global uchar* RES) //, __global ulong* thispoly)
+__kernel void init_a(__global uchar* RES, __global ulong* polyoffset)
 {
     const int l_size = 16;
     // Get the index of the current element
-    int poly = get_global_id(0);
-    uchar A[16];
-    uchar B[16];
+    long poly = get_global_id(0);
+    uchar tmpB;
+    uchar A[16]; 
+    //uchar B[16];
     uchar C[16];
     uchar D[16];
     uchar E[16];
-    uchar BB_init[4];
     // Init Function
-    
-    long tmpPoly = poly; // +0x000000000000;
+
+    long tmpPoly = poly+ *polyoffset; // offset + [0, 0x80000];
     A[0] = (tmpPoly >> 0) & 0xFF;
     A[1] = (tmpPoly >> 8) & 0xFF;
     A[2] = (tmpPoly >> 16) & 0xFF;
@@ -242,81 +243,69 @@ __kernel void init_a(__global uchar* RES) //, __global ulong* thispoly)
     }
     //
 
-    //bloc_part2();
-    B[0] = A[3 - 0];
-    B[1] = A[3 - 1];
-    B[2] = A[3 - 2];
-    B[3] = A[3 - 3];
-
-    B[0 + 4] = A[4 + 3 - 0];
-    B[1 + 4] = A[4 + 3 - 1];
-    B[2 + 4] = A[4 + 3 - 2];
-    B[3 + 4] = A[4 + 3 - 3];
-
-    B[8 + 0] = A[8 + 3 - 0];
-    B[8 + 1] = A[8 + 3 - 1];
-    B[8 + 2] = A[8 + 3 - 2];
-    B[8 + 3] = A[8 + 3 - 3];
-
-    B[0 + 12] = A[12 + 3 - 0];
-    B[1 + 12] = A[12 + 3 - 1];
-    B[2 + 12] = A[12 + 3 - 2];
-    B[3 + 12] = A[12 + 3 - 3];
-
     //loop_2610(challenge);
-#define CHALLENGECOPY(z) cha[z] 
-    C[0x0] = CHALLENGECOPY(0x2) ^ A[0x0];
-    C[0x1] = CHALLENGECOPY(0x3) ^ A[0x1];
-    C[0x2] = CHALLENGECOPY(0x4) ^ A[0x2];
-    C[0x3] = CHALLENGECOPY(0x5) ^ A[0x3];
-    C[0x4] = CHALLENGECOPY(0x0) ^ A[0x4];
-    C[0x5] = CHALLENGECOPY(0x1) ^ A[0x5];
-    C[0x6] = CHALLENGECOPY(0x2) ^ A[0x6];
-    C[0x7] = CHALLENGECOPY(0x3) ^ A[0x7];
-    C[0x8] = CHALLENGECOPY(0x4) ^ A[0x8];
-    C[0x9] = CHALLENGECOPY(0x5) ^ A[0x9];
-    C[0xA] = CHALLENGECOPY(0x0) ^ A[0xA];
-    C[0xB] = CHALLENGECOPY(0x1) ^ A[0xB];
-    C[0xC] = CHALLENGECOPY(0x2) ^ A[0xC];
-    C[0xD] = CHALLENGECOPY(0x3) ^ A[0xD];
-    C[0xE] = CHALLENGECOPY(0x4) ^ A[0xE];
-    C[0xF] = CHALLENGECOPY(0x5) ^ A[0xF];
-#undef CHALLENGECOPY
+    C[0x0] = cha16[0x0] ^ A[0x0];
+    C[0x1] = cha16[0x1] ^ A[0x1];
+    C[0x2] = cha16[0x2] ^ A[0x2];
+    C[0x3] = cha16[0x3] ^ A[0x3];
+    C[0x4] = cha16[0x4] ^ A[0x4];
+    C[0x5] = cha16[0x5] ^ A[0x5];
+    C[0x6] = cha16[0x6] ^ A[0x6];
+    C[0x7] = cha16[0x7] ^ A[0x7];
+    C[0x8] = cha16[0x8] ^ A[0x8];
+    C[0x9] = cha16[0x9] ^ A[0x9];
+    C[0xA] = cha16[0xA] ^ A[0xA];
+    C[0xB] = cha16[0xB] ^ A[0xB];
+    C[0xC] = cha16[0xC] ^ A[0xC];
+    C[0xD] = cha16[0xD] ^ A[0xD];
+    C[0xE] = cha16[0xE] ^ A[0xE];
+    C[0xF] = cha16[0xF] ^ A[0xF];
+
+    //bloc_part2();
+    //B[0] = A[3 - 0];            //0 - 3
+    //B[1] = A[3 - 1];            //1 - 2
+    //B[2] = A[3 - 2];            //2 - 1
+    //B[3] = A[3 - 3];            //3 - 0
+
+    //B[0 + 4] = A[4 + 3 - 0];    //4 - 7
+    //B[1 + 4] = A[4 + 3 - 1];    //5 - 6
+    //B[2 + 4] = A[4 + 3 - 2];    //6 - 5
+    //B[3 + 4] = A[4 + 3 - 3];    //7 - 4
+
+    //B[8 + 0] = A[8 + 3 - 0];    //8 - B
+    //B[8 + 1] = A[8 + 3 - 1];    //9 - A
+    //B[8 + 2] = A[8 + 3 - 2];    //A - 9
+    //B[8 + 3] = A[8 + 3 - 3];    //B - 8
+
+    //B[0 + 12] = A[12 + 3 - 0];  //C - F
+    //B[1 + 12] = A[12 + 3 - 1];  //D - E
+    //B[2 + 12] = A[12 + 3 - 2];  //E - D
+    //B[3 + 12] = A[12 + 3 - 3];  //F - C
 
     //main_loop_2_2655E();
     for (int pbox4_idx = 0; pbox4_idx != 0x09; ++pbox4_idx)
     {
         //sub_2401();
         //update reg B
-        BB_init[0] = aes_sbox[B[0xF]];
-        BB_init[1] = aes_sbox[B[0xC]];
-        BB_init[2] = aes_sbox[B[0xD]];
-        BB_init[3] = pbox_4[pbox4_idx] ^ aes_sbox[B[0xE]];
+        tmpB = aes_sbox[A[0xC]];                      A[0x3] = A[0x3] ^ tmpB;
+        tmpB = aes_sbox[A[0xF]];                      A[0x2] = A[0x2] ^ tmpB;
+        tmpB = aes_sbox[A[0xE]];                      A[0x1] = A[0x1] ^ tmpB;
+        tmpB = pbox_4[pbox4_idx] ^ aes_sbox[A[0xD]];  A[0x0] = A[0x0] ^ tmpB;
 
-        B[0] = BB_init[0] ^ B[0];
-        B[1] = BB_init[1] ^ B[1];
-        B[2] = BB_init[2] ^ B[2];
-        B[3] = BB_init[3] ^ B[3];
-
-        B[4] = B[0] ^ B[4];
-        B[5] = B[1] ^ B[5];
-        B[6] = B[2] ^ B[6];
-        B[7] = B[3] ^ B[7];
-
-        B[8] = B[8] ^ B[4];
-        B[9] = B[9] ^ B[5];
-        B[0xA] = B[0xA] ^ B[6];
-        B[0xB] = B[0xB] ^ B[7];
-
-        B[0xC] = B[0xC] ^ B[8];
-        B[0xD] = B[0xD] ^ B[9];
-        B[0xE] = B[0xE] ^ B[0xA];
-        B[0xF] = B[0xF] ^ B[0xB];
+        A[0x7] = A[0x3] ^ A[0x7];
+        A[0x6] = A[0x2] ^ A[0x6]; 
+        A[0x5] = A[0x1] ^ A[0x5];
+        A[0x4] = A[0x0] ^ A[0x4];
+        A[0xB] = A[0xB] ^ A[0x7];
+        A[0xA] = A[0xA] ^ A[0x6];
+        A[0x9] = A[0x9] ^ A[0x5];
+        A[0x8] = A[0x8] ^ A[0x4];
+        A[0xF] = A[0xF] ^ A[0xB];
+        A[0xE] = A[0xE] ^ A[0xA];
+        A[0xD] = A[0xD] ^ A[0x9];
+        A[0xC] = A[0xC] ^ A[0x8];
 
         //sub_2440();
-        // for (UInt8 loop = 0; loop < 16; loop++){
-        //     tab_2401[loop] = tab_10CB[loop];
-        // }
         D[0x0] = aes_sbox[C[0x0]];
         D[0x1] = aes_sbox[C[0x5]];
         D[0x2] = aes_sbox[C[0xA]];
@@ -358,56 +347,50 @@ __kernel void init_a(__global uchar* RES) //, __global ulong* thispoly)
 
         //sub_26A7
         //sub_24DB
-        C[0] = E[0] ^ B[0 + 3];
-        C[1] = E[1] ^ B[0 + 2];
-        C[2] = E[2] ^ B[0 + 1];
-        C[3] = E[3] ^ B[0 + 0];
+        C[0] = E[0] ^ A[0];
+        C[1] = E[1] ^ A[1];
+        C[2] = E[2] ^ A[2];
+        C[3] = E[3] ^ A[3];
 
-        C[4] = E[4] ^ B[4 + 3];
-        C[5] = E[5] ^ B[4 + 2];
-        C[6] = E[6] ^ B[4 + 1];
-        C[7] = E[7] ^ B[4 + 0];
+        C[4] = E[4] ^ A[4 + 0];
+        C[5] = E[5] ^ A[4 + 1];
+        C[6] = E[6] ^ A[4 + 2];
+        C[7] = E[7] ^ A[4 + 3];
 
-        C[8] = E[8] ^ B[8 + 3];
-        C[9] = E[9] ^ B[8 + 2];
-        C[0xA] = E[0xA] ^ B[8 + 1];
-        C[0xB] = E[0xB] ^ B[8 + 0];
+        C[8] = E[8] ^ A[8 + 0];
+        C[9] = E[9] ^ A[8 + 1];
+        C[0xA] = E[0xA] ^ A[8 + 2];
+        C[0xB] = E[0xB] ^ A[8 + 3];
 
-        C[0xC] = E[0x0C] ^ B[0x0C + 3];
-        C[0xD] = E[0x0D] ^ B[0x0C + 2];
-        C[0xE] = E[0x0E] ^ B[0x0C + 1];
-        C[0xF] = E[0x0F] ^ B[0x0C + 0];
+        C[0xC] = E[0xC] ^ A[0xC];
+        C[0xD] = E[0xD] ^ A[0xD];
+        C[0xE] = E[0xE] ^ A[0xE];
+        C[0xF] = E[0xF] ^ A[0xF];
         //end_sub_24DB
         //end_sub_26A7
     }
 
     //loc_26B1();
     //sub_2401();
-    BB_init[0] = aes_sbox[B[0xF]];
-    BB_init[1] = aes_sbox[B[0xC]];
-    BB_init[2] = aes_sbox[B[0xD]];
-    BB_init[3] = pbox_4[0x9] ^ aes_sbox[B[0xE]];
+    tmpB = aes_sbox[A[0xC]];                      A[0x3] = A[0x3] ^ tmpB;
+    tmpB = aes_sbox[A[0xF]];                      A[0x2] = A[0x2] ^ tmpB;
+    tmpB = aes_sbox[A[0xE]];                      A[0x1] = A[0x1] ^ tmpB;
+    tmpB = pbox_4[0x9] ^ aes_sbox[A[0xD]];        A[0x0] = A[0x0] ^ tmpB;
 
-    B[0] = BB_init[0] ^ B[0];
-    B[1] = BB_init[1] ^ B[1];
-    B[2] = BB_init[2] ^ B[2];
-    B[3] = BB_init[3] ^ B[3];
+    A[0x7] = A[0x3] ^ A[0x7];
+    A[0x6] = A[0x2] ^ A[0x6];
+    A[0x5] = A[0x1] ^ A[0x5];
+    A[0x4] = A[0x0] ^ A[0x4];
 
-    B[4] = B[0] ^ B[4];
-    B[5] = B[1] ^ B[5];
-    B[6] = B[2] ^ B[6];
-    B[7] = B[3] ^ B[7];
+    A[0xB] = A[0xB] ^ A[0x7];
+    A[0xA] = A[0xA] ^ A[0x6];
+    A[0x9] = A[0x9] ^ A[0x5];
+    A[0x8] = A[0x8] ^ A[0x4];
 
-    B[8] = B[8] ^ B[4];
-    B[9] = B[9] ^ B[5];
-    B[0xA] = B[0xA] ^ B[6];
-    B[0xB] = B[0xB] ^ B[7];
-
-    B[0xC] = B[0xC] ^ B[8];
-    B[0xD] = B[0xD] ^ B[9];
-    B[0xE] = B[0xE] ^ B[0xA];
-    B[0xF] = B[0xF] ^ B[0xB];
-
+    A[0xF] = A[0xF] ^ A[0xB];
+    A[0xE] = A[0xE] ^ A[0xA];
+    A[0xD] = A[0xD] ^ A[0x9];
+    A[0xC] = A[0xC] ^ A[0x8];
 
     E[0x0] = aes_sbox[C[0x0]];
     E[0x1] = aes_sbox[C[0x5]];
@@ -427,25 +410,25 @@ __kernel void init_a(__global uchar* RES) //, __global ulong* thispoly)
     E[0xF] = aes_sbox[C[0xB]];
 
     //sub_24DB();        
-    RES[poly * l_size + 0] = E[0] ^ B[0 + 3];
-    RES[poly * l_size + 1] = E[1] ^ B[0 + 2];
-    RES[poly * l_size + 2] = E[2] ^ B[0 + 1];
-    RES[poly * l_size + 3] = E[3] ^ B[0 + 0];
+    RES[poly * l_size + 0] = E[0] ^ A[0x0];
+    RES[poly * l_size + 1] = E[1] ^ A[0x1];
+    RES[poly * l_size + 2] = E[2] ^ A[0x2];
+    RES[poly * l_size + 3] = E[3] ^ A[0x3];
 
-    RES[poly * l_size + 4] = E[4] ^ B[4 + 3];
-    RES[poly * l_size + 5] = E[5] ^ B[4 + 2];
-    RES[poly * l_size + 6] = E[6] ^ B[4 + 1];
-    RES[poly * l_size + 7] = E[7] ^ B[4 + 0];
+    RES[poly * l_size + 4] = E[4] ^ A[0x4];
+    RES[poly * l_size + 5] = E[5] ^ A[0x5];
+    RES[poly * l_size + 6] = E[6] ^ A[0x6];
+    RES[poly * l_size + 7] = E[7] ^ A[0x7];
 
-    RES[poly * l_size + 8] = E[8] ^ B[8 + 3];
-    RES[poly * l_size + 9] = E[9] ^ B[8 + 2];
-    RES[poly * l_size + 0xA] = E[0xA] ^ B[8 + 1];
-    RES[poly * l_size + 0xB] = E[0xB] ^ B[8 + 0];
+    RES[poly * l_size + 8] = E[8] ^ A[0x8];
+    RES[poly * l_size + 9] = E[9] ^ A[0x9];
+    RES[poly * l_size + 0xA] = E[0xA] ^ A[0xA];
+    RES[poly * l_size + 0xB] = E[0xB] ^ A[0xB];
 
-    RES[poly * l_size + 0xC] = E[0xC] ^ B[0xC + 3];
-    RES[poly * l_size + 0xD] = E[0xD] ^ B[0xC + 2];
-    RES[poly * l_size + 0xE] = E[0xE] ^ B[0xC + 1];
-    RES[poly * l_size + 0xF] = E[0xF] ^ B[0xC + 0];
+    RES[poly * l_size + 0xC] = E[0xC] ^ A[0xC];
+    RES[poly * l_size + 0xD] = E[0xD] ^ A[0xD];
+    RES[poly * l_size + 0xE] = E[0xE] ^ A[0xE];
+    RES[poly * l_size + 0xF] = E[0xF] ^ A[0xF];
     //end sub_24DB();
     //end loc_26B1();
 }
