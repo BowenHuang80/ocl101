@@ -63,7 +63,7 @@ int type3(void) {
         PAGE_SIZE * LIST_SIZE * sizeof(cl_uchar), NULL, &ret);
     CHECK(ret);
 
-    cl_mem offset_mem_obj = clCreateBuffer(context, CL_MEM_READ_WRITE,
+    cl_mem startPoly_mem_obj = clCreateBuffer(context, CL_MEM_READ_WRITE,
         sizeof(cl_ulong), NULL, &ret);
     CHECK(ret);
 
@@ -96,9 +96,6 @@ int type3(void) {
     // Set the arguments of the kernel
     CHECK(ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&c_mem_obj));
 
-    //CHECK(ret = clSetKernelArg(kernel, 1, sizeof(cl_long), (void*)&offset));
-    //cl
-
     // Execute the OpenCL kernel on the list
     size_t global_item_size = PAGE_SIZE; // Process the entire lists
     //size_t local_item_size = 128; // Process in groups of 8
@@ -106,9 +103,9 @@ int type3(void) {
     for (currentPage = 0; currentPage < 4096; ++currentPage)
     {
         *startPoly = PAGE_SIZE * currentPage;
-        CHECK(ret = clEnqueueWriteBuffer(command_queue, offset_mem_obj, CL_FALSE, 0, sizeof(startPoly), startPoly, 0, NULL, NULL));
+        CHECK(ret = clEnqueueWriteBuffer(command_queue, startPoly_mem_obj, CL_FALSE, 0, sizeof(cl_ulong), startPoly, 0, NULL, NULL));
 
-        CHECK(ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &offset_mem_obj));
+        CHECK(ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &startPoly_mem_obj));
 
         CHECK(ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
             &global_item_size, NULL, 0, NULL, NULL));
@@ -143,13 +140,15 @@ int type3(void) {
     //ret = clFinish(command_queue);
     ret = clReleaseKernel(kernel);
     ret = clReleaseProgram(program);
+    ret = clReleaseMemObject(a_mem_obj);
     ret = clReleaseMemObject(c_mem_obj);
+    ret = clReleaseMemObject(startPoly_mem_obj);
     ret = clReleaseCommandQueue(command_queue);
     ret = clReleaseContext(context);
-    //free(A);
+    free(A);
     //free(B);
     free(C);
-    //free(poly);
+    free(startPoly);
     return 0;
 }
 
